@@ -79,8 +79,9 @@ flowchart LR
   mai -.-> uc6
   mai -.-> uc7
 
-  classDef later stroke-dasharray: 5 5,color:#777
-  class uc5,uc6,uc7 later
+  style uc5 stroke-dasharray:5,color:#777
+  style uc6 stroke-dasharray:5,color:#777
+  style uc7 stroke-dasharray:5,color:#777
 ```
 
 | Use case | Actor | Rules exercised | Built |
@@ -113,7 +114,7 @@ sequenceDiagram
   alt n >= 6
     API-->>Web: 409 {reasons: ["tutor T1 already has 6 bookings on 2026-03-06"]}
   else
-    API->>DB: BEGIN; INSERT INTO lessons ...; INSERT INTO lesson_events (created); COMMIT
+    API->>DB: in one transaction, INSERT lessons then INSERT lesson_events (created)
     alt constraint violated
       DB-->>API: 23P01 exclusion / 23514 check, constraint name
       API->>API: map name to reason (room busy, tutor busy, student busy, closed Monday)
