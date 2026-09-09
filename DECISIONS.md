@@ -121,4 +121,40 @@ GET  /api/changes?since=       what to tell tutors                              
 
 ## 4. Reflect
 
-_To be closed after the build._
+### Next, with another week
+
+- `POST /api/lessons/{id}/cancel` and `/move` on top of `lesson_events`, with
+  `cancelled_by` so the 4-hour charge can tell a family from a sick tutor.
+- The "what changed since 16:00" screen. The events and the `after_cutoff` flag
+  are already written on every insert; nothing reads them yet.
+- The per-tutor message text Mai pastes into WhatsApp, generated from the day.
+
+### What is weak
+
+- First row wins on import is arbitrary. L008 is refused because L007 was read
+  first; nobody at the centre chose that.
+- The daily cap counts `booked` and `no_show` and ignores cancellations. If the
+  tutor is still paid for a late cancellation, the cap is wrong (question 4).
+- No authentication. Anyone who reaches port 8080 can book.
+- The grid is desktop only. It does not fold below about 1200px.
+- `after_cutoff` is recorded and never read.
+- Cancelling still means editing a row by hand; there is no endpoint for it.
+
+### Where the AI assistant helped
+
+- Reading the brief and the export against each other, and finding the four rows
+  that break the rules, was done by the assistant.
+- The plan, the architecture diagrams and the proposal page were drafted by it.
+- The code was written across several AI sessions and reviewed at each step:
+  schema and service in the earlier ones, tests, the grid and this file in the
+  last. Every phase was run and its output read before the next started.
+- **The person submitting must rewrite this bullet in their own words before
+  pushing.** It should say what they judged, not what the tool produced.
+
+### One suggestion thrown away
+
+Pre-checking the overlap rules in Java before the insert, so the API could
+answer without touching the database. Rejected: it puts each rule in two places
+that can drift, and it is a lie under concurrency, where only the constraint
+decides. The database already says no with the constraint name; mapping that
+name to a sentence is the whole job.
