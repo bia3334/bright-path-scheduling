@@ -116,7 +116,7 @@ GET  /api/changes?since=       what to tell tutors                              
 
 - Backend: Java 17, Spring Boot 3, Spring JDBC (`JdbcClient`), Flyway for schema. No JPA: the interesting rules are raw Postgres constraints and an ORM would only get in their way.
 - Database: Postgres 16 in Docker (`btree_gist` for the exclusion constraints).
-- Frontend: React 18 with Vite. One page, native `<input type="date">`, no component library.
+- Frontend: React 19 with TypeScript and Vite. One page, native `<input type="date">`, no component library.
 
 ---
 

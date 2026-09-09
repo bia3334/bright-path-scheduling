@@ -32,7 +32,7 @@ C4Container
   Person(mai, "Mai / Owner", "browser")
 
   Container_Boundary(tool, "Scheduling tool") {
-    Container(web, "Day grid", "React 18, Vite", "One page. Rooms by time. Click an empty cell to book, refused bookings show their reason in place.")
+    Container(web, "Day grid", "React 19, TypeScript, Vite", "One page. Rooms by time. Click an empty cell to book, refused bookings show their reason in place.")
     Container(api, "Booking API", "Java 17, Spring Boot 3, Spring JDBC", "GET /api/days/{date}, POST /api/lessons, GET /api/tutors. Enforces the 6-per-day cap and exam-pair shape. Maps constraint names to 409 reasons.")
     ContainerDb(db, "Postgres 16", "Docker, btree_gist", "Owns the hard rules: EXCLUDE on room, tutor, student vs slot; CHECK closed Monday. Append-only lesson_events.")
   }

@@ -1,54 +1,104 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
+
+// Shapes of what the booking API returns. Times are "HH:MM:SS", dates "YYYY-MM-DD".
+type Status = 'booked' | 'cancelled' | 'no_show'
+
+interface Lesson {
+  id: string
+  date: string
+  start: string
+  durationMin: number
+  end: string
+  student: string
+  tutorId: string
+  tutorName: string
+  roomId: string
+  status: Status
+  pairId: string | null
+  note: string | null
+}
+
+interface Room {
+  id: string
+  lessons: Lesson[]
+}
+
+interface Day {
+  date: string
+  rooms: Room[]
+}
+
+interface Tutor {
+  id: string
+  name: string
+  subject: string
+}
+
+interface ImportReport {
+  loaded: number
+  refused: Record<string, string[]>
+}
+
+interface Draft {
+  roomId: string
+  start: string
+  student: string
+  tutorId: string
+  durationMin: 60 | 90
+  pair: boolean
+}
 
 // The centre runs 09:00 to 21:30, so the grid is 25 half-hour columns.
-const SLOTS = Array.from({ length: 25 }, (_, i) => {
+const SLOTS: string[] = Array.from({ length: 25 }, (_, i) => {
   const m = 9 * 60 + i * 30
   return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
 })
 
-const column = (start) => {
+const column = (start: string): number => {
   const [h, m] = start.split(':').map(Number)
   return (h * 60 + m - 9 * 60) / 30 + 2 // +1 for the room label column, +1 for 1-based grid
 }
 
-const hhmm = (t) => t.slice(0, 5)
+const hhmm = (t: string): string => t.slice(0, 5)
 
-const weekday = (date) =>
+const weekday = (date: string): string =>
   new Date(`${date}T00:00:00`).toLocaleDateString('en-GB', { weekday: 'long' })
 
 export default function App() {
   const [date, setDate] = useState('2026-03-06')
-  const [day, setDay] = useState(null)
-  const [tutors, setTutors] = useState([])
-  const [draft, setDraft] = useState(null)
-  const [reasons, setReasons] = useState([])
-  const [report, setReport] = useState(null)
+  const [day, setDay] = useState<Day | null>(null)
+  const [tutors, setTutors] = useState<Tutor[]>([])
+  const [draft, setDraft] = useState<Draft | null>(null)
+  const [reasons, setReasons] = useState<string[]>([])
+  const [report, setReport] = useState<ImportReport | null>(null)
   const [offline, setOffline] = useState(false)
 
   const loadDay = () =>
     fetch(`/api/days/${date}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((r) => (r.ok ? (r.json() as Promise<Day>) : Promise.reject(r.status)))
       .then((d) => { setDay(d); setOffline(false) })
       .catch(() => { setDay(null); setOffline(true) })
 
+  const loadTutors = () =>
+    fetch('/api/tutors').then((r) => r.json() as Promise<Tutor[]>).then(setTutors).catch(() => setTutors([]))
+
   useEffect(() => { loadDay() }, [date])
 
-  useEffect(() => {
-    fetch('/api/tutors').then((r) => r.json()).then(setTutors)
-  }, [])
+  useEffect(() => { loadTutors() }, [])
 
-  const changeDate = (next) => {
+  const changeDate = (next: string) => {
     setDate(next)
     setDraft(null)
     setReasons([])
   }
 
-  const submit = async (e) => {
+  const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (!draft) return
     const body = {
       date,
       start: draft.start,
-      durationMin: Number(draft.durationMin),
+      durationMin: draft.durationMin,
       student: draft.student,
       tutorId: draft.tutorId,
       roomId: draft.roomId,
@@ -64,12 +114,31 @@ export default function App() {
       setReasons([])
       loadDay()
     } else {
-      const problem = await res.json()
-      setReasons(problem.reasons ?? ['the booking was refused'])
+      const problem = (await res.json().catch(() => ({}))) as { reasons?: string[] }
+      setReasons(problem.reasons ?? [`the booking was refused (HTTP ${res.status})`])
     }
   }
 
-  const openDraft = (roomId, start) => {
+  const importCsv = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formEl = e.currentTarget
+    const form = new FormData(formEl)
+    const lessons = form.get('lessons')
+    if (!(lessons instanceof File) || !lessons.name) return
+    const res = await fetch('/api/import', { method: 'POST', body: form })
+    if (res.ok) {
+      setReport((await res.json()) as ImportReport)
+    } else {
+      const isJson = res.headers.get('content-type')?.includes('json')
+      const why = isJson ? ((await res.json()) as { reasons?: string[] }).reasons : undefined
+      setReport({ loaded: 0, refused: { import: why ?? [`backend not reachable (HTTP ${res.status})`] } })
+    }
+    formEl.reset()
+    loadDay()
+    loadTutors()
+  }
+
+  const openDraft = (roomId: string, start: string) => {
     setReasons([])
     setDraft({
       roomId,
@@ -79,22 +148,6 @@ export default function App() {
       durationMin: 60,
       pair: false,
     })
-  }
-
-  const importCsv = async (e) => {
-    e.preventDefault()
-    const form = new FormData(e.target)
-    if (!form.get('lessons')?.name) return
-    const res = await fetch('/api/import', { method: 'POST', body: form })
-    if (res.ok) {
-      setReport(await res.json())
-    } else {
-      const why = res.headers.get('content-type')?.includes('json') ? (await res.json()).reasons : null
-      setReport({ loaded: 0, refused: { import: why ?? [`backend not reachable (HTTP ${res.status})`] } })
-    }
-    e.target.reset()
-    loadDay()
-    fetch('/api/tutors').then((r) => r.json()).then(setTutors)
   }
 
   const rooms = day?.rooms ?? []
@@ -149,7 +202,7 @@ export default function App() {
 
           {rooms.flatMap((room, r) =>
             SLOTS.map((s) => {
-              const selected = draft && draft.roomId === room.id && draft.start === s
+              const selected = draft !== null && draft.roomId === room.id && draft.start === s
               return (
                 <button
                   key={`${room.id}${s}`}
@@ -216,7 +269,7 @@ export default function App() {
             Length
             <select
               value={draft.durationMin}
-              onChange={(e) => setDraft({ ...draft, durationMin: e.target.value })}
+              onChange={(e) => setDraft({ ...draft, durationMin: Number(e.target.value) === 90 ? 90 : 60 })}
             >
               <option value={60}>60 minutes</option>
               <option value={90}>90 minutes</option>

@@ -9,7 +9,7 @@ drawn in [docs/architecture.md](docs/architecture.md); the same thing written fo
 a non-technical reader is [docs/proposal.html](docs/proposal.html), and the plan
 the code was built from is [docs/build-plan.md](docs/build-plan.md).
 
-Java 17, Spring Boot 3.3, Spring JDBC, Flyway, Postgres 16, React with Vite. No
+Java 17, Spring Boot 3.3, Spring JDBC, Flyway, Postgres 16, React 19 with TypeScript and Vite. No
 JPA: the interesting rules are Postgres `EXCLUDE` constraints and an ORM would
 only stand between them and the reasons the API returns.
 
