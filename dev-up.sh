@@ -44,3 +44,10 @@ if [ -d frontend ]; then
 else
   echo "frontend: not present yet, skipped"
 fi
+
+echo
+echo "Frontend   http://localhost:5173"
+echo "Backend    http://localhost:8080/api/days/2026-03-06   (also /api/tutors, POST /api/lessons, POST /api/import)"
+echo "Database   postgresql://brightpath:brightpath@localhost:5432/brightpath"
+echo "           psql: docker compose exec db psql -U brightpath"
+echo "Logs       .dev/backend.log  .dev/frontend.log      Stop: ./dev-down.sh"
