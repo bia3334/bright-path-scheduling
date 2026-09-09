@@ -9,3 +9,4 @@ frontend/dist/
 .idea/
 *.iml
 .vscode/
+.dev/
