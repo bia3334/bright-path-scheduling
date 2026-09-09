@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Bright Path",
+      "Group": "Servers",
+      "Host": "db",
+      "Port": 5432,
+      "MaintenanceDB": "brightpath",
+      "Username": "brightpath",
+      "SSLMode": "prefer"
+    }
+  }
+}

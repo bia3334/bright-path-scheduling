@@ -6,7 +6,7 @@ cd "$(dirname "$0")"
 mkdir -p .dev
 
 echo "db: starting"
-docker compose up -d db >/dev/null
+docker compose up -d db pgadmin >/dev/null
 for _ in $(seq 1 30); do
   docker compose exec -T db pg_isready -U brightpath >/dev/null 2>&1 && break
   sleep 1
@@ -49,5 +49,6 @@ echo
 echo "Frontend   http://localhost:5173"
 echo "Backend    http://localhost:8080/api/days/2026-03-06   (also /api/tutors, POST /api/lessons, POST /api/import)"
 echo "Database   postgresql://brightpath:brightpath@localhost:5432/brightpath"
+echo "pgAdmin    http://localhost:5050   (server \"Bright Path\" is listed; password brightpath)"
 echo "           psql: docker compose exec db psql -U brightpath"
 echo "Logs       .dev/backend.log  .dev/frontend.log      Stop: ./dev-down.sh"

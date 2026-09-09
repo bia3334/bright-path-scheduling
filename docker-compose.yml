@@ -10,3 +10,18 @@ services:
       test: ["CMD-SHELL", "pg_isready -U brightpath"]
       interval: 2s
       retries: 15
+
+  # http://localhost:5050 — the Bright Path server is pre-registered; password is brightpath
+  pgadmin:
+    image: dpage/pgadmin4:8
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: brightpath
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports: ["5050:80"]
+    volumes:
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      db:
+        condition: service_healthy

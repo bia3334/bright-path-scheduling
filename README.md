@@ -22,7 +22,9 @@ Short path, from the repo root:
 ./dev-down.sh        # stop them (--reset also drops the database volume)
 ```
 
-`dev-up.sh` prints the seed lines from the backend log. Logs live in `.dev/`.
+`dev-up.sh` prints the seed lines from the backend log and ends with the links:
+frontend on 5173, API on 8080, Postgres on 5432, and pgAdmin on http://localhost:5050
+with the Bright Path server already listed (password `brightpath`). Logs live in `.dev/`.
 
 Long path, the same thing by hand:
 

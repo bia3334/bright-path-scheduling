@@ -31,5 +31,5 @@ pkill -f "$PWD/frontend/node_modules" 2>/dev/null || true
 if [ "${1:-}" = "--reset" ]; then
   docker compose down -v >/dev/null && echo "db: stopped, volume dropped (next dev-up.sh re-imports the export)"
 else
-  docker compose stop db >/dev/null && echo "db: stopped (data kept; use --reset to start over)"
+  docker compose stop >/dev/null && echo "db, pgadmin: stopped (data kept; use --reset to start over)"
 fi
