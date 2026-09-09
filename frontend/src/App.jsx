@@ -23,8 +23,13 @@ export default function App() {
   const [draft, setDraft] = useState(null)
   const [reasons, setReasons] = useState([])
   const [report, setReport] = useState(null)
+  const [offline, setOffline] = useState(false)
 
-  const loadDay = () => fetch(`/api/days/${date}`).then((r) => r.json()).then(setDay)
+  const loadDay = () =>
+    fetch(`/api/days/${date}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((d) => { setDay(d); setOffline(false) })
+      .catch(() => { setDay(null); setOffline(true) })
 
   useEffect(() => { loadDay() }, [date])
 
@@ -81,7 +86,12 @@ export default function App() {
     const form = new FormData(e.target)
     if (!form.get('lessons')?.name) return
     const res = await fetch('/api/import', { method: 'POST', body: form })
-    setReport(res.ok ? await res.json() : { loaded: 0, refused: { file: ['import failed'] } })
+    if (res.ok) {
+      setReport(await res.json())
+    } else {
+      const why = res.headers.get('content-type')?.includes('json') ? (await res.json()).reasons : null
+      setReport({ loaded: 0, refused: { import: why ?? [`backend not reachable (HTTP ${res.status})`] } })
+    }
     e.target.reset()
     loadDay()
     fetch('/api/tutors').then((r) => r.json()).then(setTutors)
@@ -118,6 +128,10 @@ export default function App() {
         <span><i className="sw cancelled" /> cancelled</span>
         <span><i className="sw no_show" /> no show</span>
       </div>
+
+      {offline && (
+        <p className="offline">The booking service is not reachable. Start it with <code>./dev-up.sh</code> and reload.</p>
+      )}
 
       <div className="board">
         <div className="grid">

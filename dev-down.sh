@@ -9,7 +9,7 @@ stop() { # name
   if [ -f "$f" ]; then
     local pid; pid=$(cat "$f")
     if kill -0 "$pid" 2>/dev/null; then
-      pkill -TERM -P "$pid" 2>/dev/null   # children first (java / node under mvn / npm)
+      kill -TERM -- "-$pid" 2>/dev/null   # whole process group: mvn+java, npm+sh+vite
       kill -TERM "$pid" 2>/dev/null
       echo "$1: stopped (pid $pid)"
     else
@@ -26,6 +26,7 @@ stop backend
 # anything that escaped the pid files
 pkill -f 'com.brightpath.booking.BookingApplication' 2>/dev/null || true
 pkill -f 'spring-boot:run' 2>/dev/null || true
+pkill -f "$PWD/frontend/node_modules" 2>/dev/null || true
 
 if [ "${1:-}" = "--reset" ]; then
   docker compose down -v >/dev/null && echo "db: stopped, volume dropped (next dev-up.sh re-imports the export)"

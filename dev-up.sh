@@ -18,7 +18,7 @@ if [ -f .dev/backend.pid ] && kill -0 "$(cat .dev/backend.pid)" 2>/dev/null; the
   echo "backend: already running (pid $(cat .dev/backend.pid))"
 else
   echo "backend: starting (log in .dev/backend.log)"
-  (cd backend; nohup mvn -q spring-boot:run > ../.dev/backend.log 2>&1 & echo $! > ../.dev/backend.pid)
+  (cd backend; setsid nohup mvn -q spring-boot:run > ../.dev/backend.log 2>&1 & echo $! > ../.dev/backend.pid)
   for _ in $(seq 1 120); do
     curl -sf localhost:8080/api/tutors >/dev/null 2>&1 && break
     sleep 1
@@ -34,7 +34,7 @@ if [ -d frontend ]; then
   else
     [ -d frontend/node_modules ] || (cd frontend && npm install --silent)
     echo "frontend: starting (log in .dev/frontend.log)"
-    (cd frontend; nohup npm run dev > ../.dev/frontend.log 2>&1 & echo $! > ../.dev/frontend.pid)
+    (cd frontend; setsid nohup npm run dev > ../.dev/frontend.log 2>&1 & echo $! > ../.dev/frontend.pid)
     for _ in $(seq 1 60); do
       curl -sf localhost:5173 >/dev/null 2>&1 && break
       sleep 1
