@@ -11,6 +11,8 @@ const column = (start) => {
   return (h * 60 + m - 9 * 60) / 30 + 2 // +1 for the room label column, +1 for 1-based grid
 }
 
+const hhmm = (t) => t.slice(0, 5)
+
 const weekday = (date) =>
   new Date(`${date}T00:00:00`).toLocaleDateString('en-GB', { weekday: 'long' })
 
@@ -73,100 +75,132 @@ export default function App() {
     })
   }
 
+  const rooms = day?.rooms ?? []
+
   return (
     <main>
       <header>
-        <h1>Bright Path</h1>
+        <h1>Bright Path<small>Day grid</small></h1>
         <input type="date" value={date} onChange={(e) => changeDate(e.target.value)} />
         <span className="weekday">{weekday(date)}</span>
+        <span className="hint">Click an empty cell to book</span>
       </header>
 
-      <div className="grid">
-        {SLOTS.map((s) => (
-          <div key={`h${s}`} className="hour" style={{ gridColumn: column(s), gridRow: 1 }}>
-            {s.endsWith(':00') ? s : ''}
-          </div>
-        ))}
+      <div className="legend">
+        <span><i className="sw" /> booked</span>
+        <span><i className="sw pair" /> exam pair</span>
+        <span><i className="sw cancelled" /> cancelled</span>
+        <span><i className="sw no_show" /> no show</span>
+      </div>
 
-        {(day?.rooms ?? []).map((room, r) => (
-          <div key={room.id} className="room" style={{ gridColumn: 1, gridRow: r + 2 }}>
-            {room.id}
-          </div>
-        ))}
-
-        {(day?.rooms ?? []).flatMap((room, r) =>
-          SLOTS.map((s) => (
-            <button
-              key={`${room.id}${s}`}
-              className="cell"
-              style={{ gridColumn: column(s), gridRow: r + 2 }}
-              onClick={() => openDraft(room.id, s)}
-            />
-          )),
-        )}
-
-        {(day?.rooms ?? []).flatMap((room, r) =>
-          room.lessons.map((l) => (
-            <div
-              key={l.id}
-              className={`chip ${l.status}`}
-              style={{
-                gridColumn: `${column(l.start)} / span ${l.durationMin / 30}`,
-                gridRow: r + 2,
-              }}
-              title={`${l.id} ${l.start}-${l.end} ${l.note ?? ''}`}
-            >
-              <b>{l.student}</b> {l.tutorName}
-              {l.pairId && <span className="pair">pair</span>}
+      <div className="board">
+        <div className="grid">
+          {SLOTS.map((s) => (
+            <div key={`h${s}`} className="hour" style={{ gridColumn: column(s), gridRow: 1 }}>
+              {s.endsWith(':00') ? s : ''}
             </div>
-          )),
-        )}
+          ))}
+
+          {rooms.map((room, r) => (
+            <div key={room.id} className="room" style={{ gridColumn: 1, gridRow: r + 2 }}>
+              {room.id}
+            </div>
+          ))}
+
+          {rooms.flatMap((room, r) =>
+            SLOTS.map((s) => {
+              const selected = draft && draft.roomId === room.id && draft.start === s
+              return (
+                <button
+                  key={`${room.id}${s}`}
+                  className={`cell${s.endsWith(':00') ? ' hour-start' : ''}${selected ? ' selected' : ''}`}
+                  style={{ gridColumn: column(s), gridRow: r + 2 }}
+                  onClick={() => openDraft(room.id, s)}
+                  aria-label={`${room.id} at ${s}`}
+                />
+              )
+            }),
+          )}
+
+          {rooms.flatMap((room, r) =>
+            room.lessons.map((l) => (
+              <div
+                key={l.id}
+                className={`chip ${l.status}${l.pairId ? ' paired' : ''}`}
+                style={{
+                  gridColumn: `${column(hhmm(l.start))} / span ${l.durationMin / 30}`,
+                  gridRow: r + 2,
+                }}
+                title={`${l.id} · ${hhmm(l.start)}–${hhmm(l.end)}${l.note ? ' · ' + l.note : ''}`}
+              >
+                <b>{l.student}</b>
+                <i>
+                  {l.tutorName}
+                  {l.pairId && ' · exam pair'}
+                  {l.status === 'cancelled' && ' · cancelled'}
+                  {l.status === 'no_show' && ' · no show'}
+                </i>
+              </div>
+            )),
+          )}
+        </div>
       </div>
 
       {draft && (
         <form className="panel" onSubmit={submit}>
           <h2>
-            {draft.roomId} at {draft.start}
+            New lesson <span>· {draft.roomId} at {draft.start}, {weekday(date)} {date}</span>
           </h2>
-          <input
-            placeholder="student"
-            value={draft.student}
-            onChange={(e) => setDraft({ ...draft, student: e.target.value })}
-          />
-          <select
-            value={draft.tutorId}
-            onChange={(e) => setDraft({ ...draft, tutorId: e.target.value })}
-          >
-            {tutors.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name} ({t.subject})
-              </option>
-            ))}
-          </select>
-          <select
-            value={draft.durationMin}
-            onChange={(e) => setDraft({ ...draft, durationMin: e.target.value })}
-          >
-            <option value={60}>60 min</option>
-            <option value={90}>90 min</option>
-          </select>
           <label>
+            Student
+            <input
+              autoFocus
+              value={draft.student}
+              onChange={(e) => setDraft({ ...draft, student: e.target.value })}
+            />
+          </label>
+          <label>
+            Tutor
+            <select
+              value={draft.tutorId}
+              onChange={(e) => setDraft({ ...draft, tutorId: e.target.value })}
+            >
+              {tutors.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name} ({t.subject})
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Length
+            <select
+              value={draft.durationMin}
+              onChange={(e) => setDraft({ ...draft, durationMin: e.target.value })}
+            >
+              <option value={60}>60 minutes</option>
+              <option value={90}>90 minutes</option>
+            </select>
+          </label>
+          <label className="check">
             <input
               type="checkbox"
               checked={draft.pair}
               onChange={(e) => setDraft({ ...draft, pair: e.target.checked })}
             />
-            exam pair
+            Exam pair (two students, half price)
           </label>
-          <button type="submit">Book</button>
-          <button type="button" onClick={() => setDraft(null)}>
-            Cancel
-          </button>
           <ul className="reasons">
             {reasons.map((r) => (
               <li key={r}>{r}</li>
             ))}
           </ul>
+          <div className="actions">
+            <button type="submit">Book</button>
+            <button type="button" onClick={() => setDraft(null)}>
+              Cancel
+            </button>
+          </div>
         </form>
       )}
     </main>
