@@ -1,4 +1,4 @@
-package com.brightpath.booking;
+package com.brightpath.booking.model;
 
 import java.time.LocalDate;
 import java.time.LocalTime;

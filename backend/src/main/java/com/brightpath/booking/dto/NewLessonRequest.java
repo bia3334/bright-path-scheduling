@@ -1,9 +1,9 @@
-package com.brightpath.booking;
+package com.brightpath.booking.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-public record NewLesson(
+public record NewLessonRequest(
     @NotNull(message = "date must not be null")
     java.time.LocalDate date,
 

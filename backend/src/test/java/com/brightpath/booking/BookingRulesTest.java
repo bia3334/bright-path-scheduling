@@ -1,5 +1,9 @@
 package com.brightpath.booking;
 
+import com.brightpath.booking.dto.NewLessonRequest;
+import com.brightpath.booking.exception.RefusedException;
+import com.brightpath.booking.seed.SeedImporter;
+import com.brightpath.booking.service.LessonService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,14 +39,14 @@ class BookingRulesTest {
     @Autowired JdbcClient jdbc;
 
     /** Free slots used below: 2026-03-07 afternoon in R4/R5, which the export never touches. */
-    private static NewLesson at(String date, String start, String student, String tutor, String room, String pairId) {
-        return new NewLesson(LocalDate.parse(date), LocalTime.parse(start), 60,
+    private static NewLessonRequest at(String date, String start, String student, String tutor, String room, String pairId) {
+        return new NewLessonRequest(LocalDate.parse(date), LocalTime.parse(start), 60,
             student, tutor, room, pairId, null);
     }
 
     @Test
     void seedRefusesExactlyTheFourKnownRows() {
-        assertThat(seed.refused.keySet()).containsExactly("L008", "L027", "L032", "L034");
+        assertThat(seed.refused().keySet()).containsExactly("L008", "L027", "L032", "L034");
         assertThat(jdbc.sql("SELECT count(*) FROM lessons WHERE id IN ('L008','L027','L032','L034')")
             .query(Long.class).single()).isZero();
     }
@@ -51,7 +55,7 @@ class BookingRulesTest {
     void studentCannotBeInTwoRooms() {
         service.create(at("2026-03-07", "14:00", "Le Minh Chau", "T2", "R4", null));
         assertThatThrownBy(() -> service.create(at("2026-03-07", "14:00", "Le Minh Chau", "T3", "R5", null)))
-            .isInstanceOf(Refused.class)
+            .isInstanceOf(RefusedException.class)
             .hasMessageContaining("already booked");
     }
 
@@ -66,14 +70,14 @@ class BookingRulesTest {
     void seventhBookingIsRefused() {
         // the export leaves T1 with six on Friday; L027 was the seventh and was refused
         assertThatThrownBy(() -> service.create(at("2026-03-06", "20:30", "One Too Many", "T1", "R6", null)))
-            .isInstanceOf(Refused.class)
+            .isInstanceOf(RefusedException.class)
             .hasMessageContaining("already has 6");
     }
 
     @Test
     void mondayIsRefused() {
         assertThatThrownBy(() -> service.create(at("2026-03-09", "10:00", "Monday Hopeful", "T2", "R6", null)))
-            .isInstanceOf(Refused.class)
+            .isInstanceOf(RefusedException.class)
             .hasMessageContaining("Monday");
     }
 }

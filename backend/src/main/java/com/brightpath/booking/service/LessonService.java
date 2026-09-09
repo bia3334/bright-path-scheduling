@@ -1,5 +1,9 @@
-package com.brightpath.booking;
+package com.brightpath.booking.service;
 
+import com.brightpath.booking.dto.NewLessonRequest;
+import com.brightpath.booking.exception.RefusedException;
+import com.brightpath.booking.model.Lesson;
+import com.brightpath.booking.repository.LessonRepository;
 import org.postgresql.util.PSQLException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -17,18 +21,18 @@ import java.util.List;
  */
 @Service
 @Transactional
-class LessonService {
+public class LessonService {
 
     private final LessonRepository repo;
     private final Clock clock;
 
-    LessonService(LessonRepository repo, Clock clock) {
+    public LessonService(LessonRepository repo, Clock clock) {
         this.repo = repo;
         this.clock = clock;
     }
 
     /** A live booking from the API. */
-    Lesson create(NewLesson in) {
+    public Lesson create(NewLessonRequest in) {
         return create(in, LocalDateTime.now(clock), null, "booked", null);
     }
 
@@ -36,13 +40,13 @@ class LessonService {
      * Full form, used by the seed importer to keep the export's ids, statuses and
      * cancellation times. A cancelled row skips the occupancy rules: it holds no slot.
      */
-    Lesson create(NewLesson in, LocalDateTime createdAt, String preferredId, String status, LocalDateTime cancelledAt) {
+    public Lesson create(NewLessonRequest in, LocalDateTime createdAt, String preferredId, String status, LocalDateTime cancelledAt) {
         boolean occupiesSlot = !"cancelled".equals(status) && cancelledAt == null;
         if (occupiesSlot) {
             List<String> reasons = new ArrayList<>();
             checkPairShape(in, reasons);
             checkDailyCap(in, reasons);
-            if (!reasons.isEmpty()) throw new Refused(reasons);
+            if (!reasons.isEmpty()) throw new RefusedException(reasons);
         }
 
         Lesson lesson = new Lesson(null, in.date(), in.start(), in.durationMin(),
@@ -53,12 +57,12 @@ class LessonService {
         try {
             id = repo.insert(lesson, createdAt, preferredId, cancelledAt);
         } catch (DataIntegrityViolationException e) {
-            throw new Refused(List.of(reasonFor(e, in)));
+            throw new RefusedException(List.of(reasonFor(e, in)));
         }
         return repo.byId(id);
     }
 
-    private void checkPairShape(NewLesson in, List<String> reasons) {
+    private void checkPairShape(NewLessonRequest in, List<String> reasons) {
         if (in.pairId() == null) return;
         List<Lesson> existing = repo.byPairId(in.pairId());
         if (existing.size() >= 2) {
@@ -72,7 +76,7 @@ class LessonService {
         }
     }
 
-    private void checkDailyCap(NewLesson in, List<String> reasons) {
+    private void checkDailyCap(NewLessonRequest in, List<String> reasons) {
         // joining an existing pair adds no booking, so that pair's key is not counted
         String excludeKey = in.pairId() != null ? in.pairId() : "new";
         if (repo.distinctBookingsForTutorOnDay(in.tutorId(), in.date(), excludeKey) >= 6) {
@@ -80,7 +84,7 @@ class LessonService {
         }
     }
 
-    private String reasonFor(DataIntegrityViolationException e, NewLesson in) {
+    private String reasonFor(DataIntegrityViolationException e, NewLessonRequest in) {
         String constraint = e.getCause() instanceof PSQLException p && p.getServerErrorMessage() != null
             ? p.getServerErrorMessage().getConstraint() : null;
         if (constraint == null) throw e;

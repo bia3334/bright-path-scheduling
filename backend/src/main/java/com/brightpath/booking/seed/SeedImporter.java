@@ -1,5 +1,9 @@
-package com.brightpath.booking;
+package com.brightpath.booking.seed;
 
+import com.brightpath.booking.dto.NewLessonRequest;
+import com.brightpath.booking.exception.RefusedException;
+import com.brightpath.booking.repository.LessonRepository;
+import com.brightpath.booking.service.LessonService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +30,7 @@ import java.util.Map;
  * First row wins. Nothing is ever deleted; reset the database to import again.
  */
 @Component
-class SeedImporter implements ApplicationRunner {
+public class SeedImporter implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(SeedImporter.class);
 
@@ -34,9 +38,14 @@ class SeedImporter implements ApplicationRunner {
     private final LessonService service;
     private final Path dir;
     private final LocalDateTime createdAt;
-    final Map<String, List<String>> refused = new LinkedHashMap<>();
+    private final Map<String, List<String>> refused = new LinkedHashMap<>();
 
-    SeedImporter(LessonRepository repo, LessonService service,
+    /** Rows the rules refused on import, by lesson id, in file order. */
+    public Map<String, List<String>> refused() {
+        return refused;
+    }
+
+    public SeedImporter(LessonRepository repo, LessonService service,
                  @Value("${app.seed-dir}") String dir,
                  @Value("${app.seed-created-at}") LocalDateTime createdAt) {
         this.repo = repo;
@@ -61,12 +70,12 @@ class SeedImporter implements ApplicationRunner {
             String pairId = note.contains("exam pair") ? r[1] + "_" + r[2] + "_" + r[5] : null;
             LocalDateTime cancelledAt = r[8].isBlank() ? null
                 : OffsetDateTime.parse(r[8]).toLocalDateTime();
-            NewLesson in = new NewLesson(LocalDate.parse(r[1]), LocalTime.parse(r[2]),
+            NewLessonRequest in = new NewLessonRequest(LocalDate.parse(r[1]), LocalTime.parse(r[2]),
                 Integer.parseInt(r[3]), r[4], r[5], r[6], pairId, note.isBlank() ? null : note);
             try {
                 service.create(in, createdAt, id, status, cancelledAt);
                 loaded++;
-            } catch (Refused e) {
+            } catch (RefusedException e) {
                 refused.put(id, e.reasons());
             }
         }

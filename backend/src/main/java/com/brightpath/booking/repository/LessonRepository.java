@@ -1,7 +1,9 @@
-package com.brightpath.booking;
+package com.brightpath.booking.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.brightpath.booking.model.Lesson;
+import com.brightpath.booking.model.Tutor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -12,7 +14,7 @@ import java.time.LocalTime;
 import java.util.List;
 
 @Repository
-class LessonRepository {
+public class LessonRepository {
 
     private static final String SELECT = """
         SELECT l.id, l.date, l.start_time, l.duration_min, l.student,
@@ -25,26 +27,26 @@ class LessonRepository {
     private final JdbcClient jdbc;
     private final ObjectMapper mapper;
 
-    LessonRepository(JdbcClient jdbc, ObjectMapper mapper) {
+    public LessonRepository(JdbcClient jdbc, ObjectMapper mapper) {
         this.jdbc = jdbc;
         this.mapper = mapper;
     }
 
-    List<Lesson> byDate(LocalDate date) {
+    public List<Lesson> byDate(LocalDate date) {
         return jdbc.sql(SELECT + " WHERE l.date = ? ORDER BY l.room_id, l.start_time")
             .param(date).query(mapLesson).list();
     }
 
-    Lesson byId(String id) {
+    public Lesson byId(String id) {
         return jdbc.sql(SELECT + " WHERE l.id = ?").param(id).query(mapLesson).single();
     }
 
-    List<Lesson> byPairId(String pairId) {
+    public List<Lesson> byPairId(String pairId) {
         return jdbc.sql(SELECT + " WHERE l.pair_id = ?").param(pairId).query(mapLesson).list();
     }
 
     /** Bookings that occupy the tutor that day. Rows sharing a pair_id count once. */
-    long distinctBookingsForTutorOnDay(String tutorId, LocalDate date, String excludingKey) {
+    public long distinctBookingsForTutorOnDay(String tutorId, LocalDate date, String excludingKey) {
         return jdbc.sql("""
             SELECT count(DISTINCT coalesce(pair_id, id))
               FROM lessons
@@ -59,7 +61,7 @@ class LessonRepository {
      * Inserts the row and its created event. When cancelledAt is given the row is
      * stored as cancelled and a second event records the change. Returns the id.
      */
-    String insert(Lesson lesson, LocalDateTime createdAt, String preferredId, LocalDateTime cancelledAt) {
+    public String insert(Lesson lesson, LocalDateTime createdAt, String preferredId, LocalDateTime cancelledAt) {
         String id = preferredId != null ? preferredId : "L" + jdbc.sql("SELECT nextval('lesson_seq')").query(Long.class).single();
         Lesson booked = withIdAndStatus(lesson, id, cancelledAt != null ? "cancelled" : lesson.status());
 
@@ -107,22 +109,21 @@ class LessonRepository {
             l.tutorId(), l.tutorName(), l.roomId(), status, l.pairId(), l.note());
     }
 
-    List<String> rooms() {
+    public List<String> rooms() {
         return jdbc.sql("SELECT id FROM rooms ORDER BY id").query(String.class).list();
     }
 
-    record Tutor(String id, String name, String subject) {}
 
-    List<Tutor> tutors() {
+    public List<Tutor> tutors() {
         return jdbc.sql("SELECT id, name, subject FROM tutors ORDER BY id").query(Tutor.class).list();
     }
 
-    void insertTutor(String id, String name, String subject, String phone) {
+    public void insertTutor(String id, String name, String subject, String phone) {
         jdbc.sql("INSERT INTO tutors (id, name, subject, phone) VALUES (?, ?, ?, ?)")
             .param(id).param(name).param(subject).param(phone).update();
     }
 
-    long lessonCount() {
+    public long lessonCount() {
         return jdbc.sql("SELECT count(*) FROM lessons").query(Long.class).single();
     }
 
