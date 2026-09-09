@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getDay, getTutors } from './api/client'
-import type { Day, Tutor } from './api/types'
+import type { Day, Lesson, Tutor } from './api/types'
 import BookingPanel from './components/BookingPanel'
 import DayGrid from './components/DayGrid'
 import ImportBar from './components/ImportBar'
 import Legend from './components/Legend'
+import LessonDetails from './components/LessonDetails'
 import { weekday } from './lib/time'
 
-interface Pick {
-  roomId: string
-  start: string
-}
+type Pick =
+  | { kind: 'cell'; roomId: string; start: string }
+  | { kind: 'lessons'; lessons: Lesson[] }
 
 /** One screen: pick a day, see it as a grid, click an empty cell to book. */
 export default function App() {
@@ -50,9 +50,14 @@ export default function App() {
         <p className="offline">The booking service is not reachable. Start it with <code>./dev-up.sh</code> and reload.</p>
       )}
 
-      <DayGrid rooms={day?.rooms ?? []} selected={pick} onPickCell={(roomId, start) => setPick({ roomId, start })} />
+      <DayGrid
+        rooms={day?.rooms ?? []}
+        selected={pick?.kind === 'cell' ? pick : null}
+        onPickCell={(roomId, start) => setPick({ kind: 'cell', roomId, start })}
+        onPickLesson={(lessons) => setPick({ kind: 'lessons', lessons })}
+      />
 
-      {pick && (
+      {pick?.kind === 'cell' && (
         <BookingPanel
           key={`${pick.roomId}-${pick.start}`}
           date={date}
@@ -60,8 +65,13 @@ export default function App() {
           start={pick.start}
           tutors={tutors}
           onBooked={() => { setPick(null); reload() }}
+          onChanged={reload}
           onCancel={() => setPick(null)}
         />
+      )}
+
+      {pick?.kind === 'lessons' && (
+        <LessonDetails key={pick.lessons[0].id} lessons={pick.lessons} onClose={() => setPick(null)} />
       )}
     </main>
   )

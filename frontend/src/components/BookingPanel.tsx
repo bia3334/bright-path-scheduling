@@ -8,28 +8,47 @@ interface Props {
   roomId: string
   start: string
   tutors: Tutor[]
-  onBooked: () => void
+  onBooked: () => void   // everything went in: close the panel
+  onChanged: () => void  // something went in: redraw the grid, keep the panel
   onCancel: () => void
 }
 
-/** The form for one empty cell. A refusal shows its reasons here, next to the fields. */
-export default function BookingPanel({ date, roomId, start, tutors, onBooked, onCancel }: Props) {
+/**
+ * The form for one empty cell. An exam pair is two lessons that share a pair id,
+ * so the form asks for two students and books them one after the other.
+ * A refusal shows its reasons here, next to the fields.
+ */
+export default function BookingPanel({ date, roomId, start, tutors, onBooked, onChanged, onCancel }: Props) {
   const [student, setStudent] = useState('')
+  const [second, setSecond] = useState('')
   const [tutorId, setTutorId] = useState(tutors[0]?.id ?? '')
   const [durationMin, setDurationMin] = useState<60 | 90>(60)
   const [pair, setPair] = useState(false)
   const [reasons, setReasons] = useState<string[]>([])
 
+  const reasonsOf = (err: unknown) => (err instanceof ApiRefused ? err.reasons : ['the booking was refused'])
+
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    const pairId = pair ? `${date}_${start}_${tutorId}` : null
+    const lesson = (name: string) => createLesson({ date, start, durationMin, student: name, tutorId, roomId, pairId })
+
     try {
-      await createLesson({
-        date, start, durationMin, student, tutorId, roomId,
-        pairId: pair ? `${date}_${start}_${tutorId}` : null,
-      })
+      await lesson(student)
+    } catch (err) {
+      setReasons(reasonsOf(err))
+      return
+    }
+    if (!pair) {
+      onBooked()
+      return
+    }
+    try {
+      await lesson(second)
       onBooked()
     } catch (err) {
-      setReasons(err instanceof ApiRefused ? err.reasons : ['the booking was refused'])
+      onChanged()
+      setReasons([`${student} is booked. ${second} was refused:`, ...reasonsOf(err)])
     }
   }
 
@@ -40,7 +59,7 @@ export default function BookingPanel({ date, roomId, start, tutors, onBooked, on
       </h2>
       <label>
         Student
-        <input autoFocus value={student} onChange={(e) => setStudent(e.target.value)} />
+        <input autoFocus required value={student} onChange={(e) => setStudent(e.target.value)} />
       </label>
       <label>
         Tutor
@@ -59,13 +78,19 @@ export default function BookingPanel({ date, roomId, start, tutors, onBooked, on
       </label>
       <label className="check">
         <input type="checkbox" checked={pair} onChange={(e) => setPair(e.target.checked)} />
-        Exam pair (two students, half price)
+        Exam pair: two students, one tutor, one room, half price
       </label>
+      {pair && (
+        <label>
+          Second student
+          <input required value={second} onChange={(e) => setSecond(e.target.value)} />
+        </label>
+      )}
       <ul className="reasons">
         {reasons.map((r) => <li key={r}>{r}</li>)}
       </ul>
       <div className="actions">
-        <button type="submit">Book</button>
+        <button type="submit">{pair ? 'Book both' : 'Book'}</button>
         <button type="button" onClick={onCancel}>Cancel</button>
       </div>
     </form>
