@@ -95,4 +95,12 @@ class BookingRulesTest {
         assertThat(again.refused()).hasSize(34);
         assertThat(again.refused().get("L001")).containsExactly("lesson L001 is already in the system");
     }
+
+    @Test
+    void studentMatchIgnoresCaseAndSpaces() {
+        service.create(at("2026-03-08", "15:00", "Mai Anh", "T2", "R6", null));
+        assertThatThrownBy(() -> service.create(at("2026-03-08", "15:00", "  mai anh ", "T3", "R5", null)))
+            .isInstanceOf(RefusedException.class)
+            .hasMessageContaining("already booked");
+    }
 }

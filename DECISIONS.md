@@ -90,7 +90,7 @@ lesson_events id, lesson_id, at, kind (created|moved|cancelled|no_show),
 |---|---|---|
 | Room holds one lesson at a time | DB, `EXCLUDE` on `(room_id, slot)` ignoring same `pair_id` and cancelled rows | A range exclusion is exactly this rule, and it holds under concurrent requests and against anyone writing with psql. |
 | Tutor in one room at a time | DB, `EXCLUDE` on `(tutor_id, slot)` same exceptions | Same reason. |
-| Student in one place at a time | DB, `EXCLUDE` on `(student, slot)` ignoring cancelled | The owner's dealbreaker. Must survive any client. |
+| Student in one place at a time | DB, `EXCLUDE` on `(lower(trim(student)), slot)` ignoring cancelled | The owner's dealbreaker. Must survive any client. Students are free-text names typed at the desk, so the key is case- and space-insensitive (V2). A students table is the real fix; see section 4. |
 | Closed Monday | DB, `CHECK (extract(dow from date) <> 1)` | One line, no judgement needed. |
 | Duration 60 or 90, status enum | DB, `CHECK` | Same. |
 | Max 6 bookings per tutor per day | Code | It is an aggregate over rows, and "a pair counts once" is a business reading, not a shape. A trigger would hide that reading in SQL nobody will look at on Monday. |
@@ -136,6 +136,7 @@ GET  /api/changes?since=       what to tell tutors                              
   first; nobody at the centre chose that.
 - The daily cap counts `booked` and `no_show` and ignores cancellations. If the
   tutor is still paid for a late cancellation, the cap is wrong (question 4).
+- Students are free-text names typed at the desk. The one-place rule matches on lowercase trimmed text (V2), so "Le Minh Chau" and "le minh chau " are one student, but "Le M. Chau" is not. The real fix is a students table with an id on every lesson.
 - No authentication. Anyone who reaches port 8080 can book.
 - The grid is desktop only. It does not fold below about 1200px.
 - `after_cutoff` is recorded and never read.

@@ -49,8 +49,9 @@ public class LessonService {
             if (!reasons.isEmpty()) throw new RefusedException(reasons);
         }
 
+        // names are typed at the desk; store them trimmed, the DB matches them case-insensitively
         Lesson lesson = new Lesson(null, in.date(), in.start(), in.durationMin(),
-            in.start().plusMinutes(in.durationMin()), in.student(), in.tutorId(), null,
+            in.start().plusMinutes(in.durationMin()), in.student().strip(), in.tutorId(), null,
             in.roomId(), status, in.pairId(), in.note());
 
         String id;
@@ -91,7 +92,7 @@ public class LessonService {
         return switch (constraint) {
             case "lessons_room_busy"     -> "room " + in.roomId() + " is already taken at " + in.start() + " on " + in.date();
             case "lessons_tutor_busy"    -> "tutor " + in.tutorId() + " is already teaching at " + in.start() + " on " + in.date();
-            case "lessons_student_busy"  -> in.student() + " is already booked at " + in.start() + " on " + in.date();
+            case "lessons_student_busy"  -> in.student().strip() + " is already booked at " + in.start() + " on " + in.date();
             case "lessons_closed_monday" -> in.date() + " is a Monday, the centre is closed";
             case "lessons_duration_chk"  -> "duration must be 60 or 90 minutes";
             default -> throw e;
