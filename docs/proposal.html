@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bright Path Booking Plan</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F5F6F3; --paper:#FFFFFF; --ink:#1A1D1B; --ink-2:#4B524E; --ink-3:#7C847F;
+  --line:#D9DDD8; --line-2:#EBEEEA;
+  --accent:#0E6B66; --accent-ink:#FFFFFF; --accent-soft:#DDEFEC;
+  --bad:#A8261D; --bad-soft:#F8E1DE; --pair:#8A5A00; --pair-soft:#F6E9C9;
+  --chip:#E6ECE9; --chip-ink:#1A1D1B;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#151816; --paper:#1D211F; --ink:#ECEEEA; --ink-2:#B9BFBA; --ink-3:#848B86;
+    --line:#333936; --line-2:#272C29;
+    --accent:#5CC4BB; --accent-ink:#0F1A19; --accent-soft:#183532;
+    --bad:#F0847A; --bad-soft:#3E1F1C; --pair:#E6B85C; --pair-soft:#3B2F14;
+    --chip:#2A312E; --chip-ink:#ECEEEA;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#151816; --paper:#1D211F; --ink:#ECEEEA; --ink-2:#B9BFBA; --ink-3:#848B86;
+  --line:#333936; --line-2:#272C29;
+  --accent:#5CC4BB; --accent-ink:#0F1A19; --accent-soft:#183532;
+  --bad:#F0847A; --bad-soft:#3E1F1C; --pair:#E6B85C; --pair-soft:#3B2F14;
+  --chip:#2A312E; --chip-ink:#ECEEEA;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Newsreader",Georgia,"Times New Roman",serif;font-size:18px;line-height:1.55;font-optical-sizing:auto}
+h1,h2,h3{font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;font-weight:700;line-height:1.1;text-wrap:balance;margin:0}
+h1{font-size:clamp(2.2rem,5vw,3.6rem);letter-spacing:-0.02em}
+h2{font-size:1.75rem;margin:3.5rem 0 1rem;letter-spacing:-0.01em}
+h3{font-size:1.15rem;font-weight:700;margin:1.6rem 0 .5rem}
+p{margin:0 0 1rem}
+.mono,.eyebrow,.chip i,.chip b,.day-head,.room,.axis,.k{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace}
+.eyebrow{font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:500}
+.wrap{max-width:68ch;margin:0 auto;padding:3.5rem 1.25rem 5rem}
+.wide{max-width:1120px;margin:1.5rem auto;padding:0 1.25rem}
+header{display:grid;gap:1rem;padding-bottom:2rem;border-bottom:1px solid var(--line)}
+.lede{font-size:1.25rem;color:var(--ink-2);max-width:60ch}
+.meta{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;color:var(--ink-3);font-size:.85rem}
+.meta .k{color:var(--ink-2)}
+strong{font-weight:500;color:var(--ink)}
+.callout{background:var(--paper);border-left:4px solid var(--accent);padding:1rem 1.25rem;margin:1.5rem 0;font-size:1.05rem}
+.callout.bad{border-color:var(--bad)}
+.quotes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin:1.25rem 0}
+.quote{background:var(--paper);padding:1rem 1.1rem;border-top:2px solid var(--line)}
+.quote .who{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:.4rem}
+.quote p{font-size:1rem;margin:0;color:var(--ink-2)}
+table{width:100%;border-collapse:collapse;font-size:.98rem;margin:1rem 0}
+th,td{text-align:left;vertical-align:top;padding:.65rem .6rem;border-bottom:1px solid var(--line)}
+th{font-family:"Bricolage Grotesque",sans-serif;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);font-weight:700}
+td.k{white-space:nowrap;color:var(--ink-2);font-size:.9rem}
+.tbl{overflow-x:auto}
+.tag{display:inline-block;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:.15rem .5rem;border-radius:3px;white-space:nowrap}
+.tag.now{background:var(--accent);color:var(--accent-ink)}
+.tag.later{background:var(--chip);color:var(--ink-2)}
+.tag.db{background:var(--accent-soft);color:var(--accent)}
+.tag.code{background:var(--chip);color:var(--ink-2)}
+ul{padding-left:1.2rem}li{margin:.35rem 0}
+/* timetable */
+.legend{display:flex;flex-wrap:wrap;gap:.6rem 1.25rem;font-size:.85rem;color:var(--ink-2);margin:.75rem 0 1rem}
+.legend span{display:inline-flex;align-items:center;gap:.4rem}
+.sw{width:14px;height:14px;border-radius:2px;background:var(--chip);border:1px solid var(--line)}
+.sw.bad{background:var(--bad-soft);border-color:var(--bad)}
+.sw.pair{background:var(--pair-soft);border-color:var(--pair)}
+.sw.cancelled{background:transparent;border:1px dashed var(--ink-3)}
+.grid{background:var(--paper);border:1px solid var(--line);padding:.75rem;overflow-x:auto}
+.grid-inner{min-width:900px}
+.axis{display:grid;grid-template-columns:56px repeat(25,1fr);font-size:.7rem;color:var(--ink-3);margin-bottom:.4rem}
+.axis span{grid-column:span 2;border-left:1px solid var(--line-2);padding-left:.25rem}
+.axis span:first-child{grid-column:1;border:0}
+.axis span:last-child{grid-column:span 1}
+.day{border-top:1px solid var(--line);padding:.5rem 0 .6rem}
+.day-head{display:flex;gap:.75rem;align-items:baseline;font-size:.8rem;color:var(--ink-2);padding:0 0 .35rem 4px}
+.day-head .wd{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:.9rem;color:var(--ink)}
+.closed-tag{color:var(--bad);font-weight:500}
+.day.closed .track{background:repeating-linear-gradient(-45deg,transparent 0 6px,var(--line-2) 6px 7px)}
+.lane{display:grid;grid-template-columns:56px 1fr;align-items:stretch;margin:2px 0}
+.room{font-size:.72rem;color:var(--ink-3);padding-top:.35rem}
+.track{display:grid;grid-template-columns:repeat(25,1fr);grid-auto-rows:minmax(34px,auto);gap:2px 0;background-image:linear-gradient(to right,var(--line-2) 1px,transparent 1px);background-size:calc(100% / 12.5) 100%}
+.chip{grid-row:1;background:var(--chip);color:var(--chip-ink);border-left:3px solid var(--ink-3);padding:.2rem .4rem;font-size:.7rem;line-height:1.2;overflow:hidden;margin-right:2px;display:flex;flex-direction:column;justify-content:center;min-height:34px}
+.chip b{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip i{font-style:normal;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip.conflict{background:var(--bad-soft);border-left-color:var(--bad)}
+.chip.conflict i{color:var(--bad);font-weight:500}
+.chip.pair{background:var(--pair-soft);border-left-color:var(--pair)}
+.chip.pair i{color:var(--pair);font-weight:500}
+.chip.cancelled{background:transparent;border:1px dashed var(--ink-3);border-left:3px dashed var(--ink-3)}
+.chip.noshow{opacity:.65}
+/* diagrams */
+.fig{background:var(--paper);border:1px solid var(--line);padding:1rem;overflow-x:auto;margin:1rem 0}
+.fig pre{margin:0}
+figcaption{font-size:.85rem;color:var(--ink-3);margin-top:.5rem}
+details{margin:1rem 0;border:1px solid var(--line);background:var(--paper);padding:.5rem 1rem}
+summary{cursor:pointer;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;padding:.4rem 0}
+summary:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin:1rem 0}
+.step{background:var(--paper);border:1px solid var(--line);padding:.9rem 1rem;font-size:.95rem}
+.step .n{font-family:"IBM Plex Mono",monospace;font-size:.75rem;color:var(--accent);display:block;margin-bottom:.3rem}
+@media (max-width:640px){body{font-size:17px}}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">Bright Path Learning Centre · Da Nang</span>
+  <h1>One screen that never double-books a lesson</h1>
+  <p class="lede">A plan for replacing the front-desk spreadsheet with the smallest tool that takes the daily pain away. Written for the owner and the team first, with the technical detail tucked behind it.</p>
+  <div class="meta">
+    <span><span class="k">Seed week</span> 3 to 10 March 2026</span>
+    <span><span class="k">"Today" in the demo</span> Friday 6 March 2026, 10:00</span>
+    <span><span class="k">Time box</span> 2.5 hours of build</span>
+  </div>
+</header>
+
+<h2>What is going wrong today</h2>
+<p>Everything runs from one shared spreadsheet and a set of WhatsApp groups. Mai, the receptionist, opens the sheet at seven, works out who teaches whom, and messages each tutor their day. When a family cancels she edits the sheet, messages the tutor, and tries to remember to tell the next family a slot is free. She is the only person who understands the sheet, and she goes on leave in eight weeks.</p>
+<div class="quotes">
+  <div class="quote"><div class="who">Owner</div><p>"Twice last term we had a student booked into two places at once. That can never happen again. If the system allows it, the system is broken."</p></div>
+  <div class="quote"><div class="who">Receptionist</div><p>"In exam season I put two students with one tutor in the same room, on purpose. It is half price and the families like it."</p></div>
+  <div class="quote"><div class="who">Tutor</div><p>"I get my day in a message, then a correction, then sometimes a third message. I do not always know which one is real."</p></div>
+</div>
+
+<h2>What last week actually looked like</h2>
+<p>We loaded the real export from the front desk and laid it out as a timetable, one row per room. Every lesson that breaks one of the centre's own rules is marked in red. The exam pair, which the rules forbid but the centre does on purpose, is in amber.</p>
+</div>
+
+<div class="wide">
+<div class="legend">
+  <span><i class="sw"></i> booked</span>
+  <span><i class="sw bad"></i> breaks a rule</span>
+  <span><i class="sw pair"></i> exam pair, two students</span>
+  <span><i class="sw cancelled"></i> cancelled</span>
+  <span>faded = student did not show</span>
+</div>
+<div class="grid"><div class="grid-inner">
+<div class="axis"><span></span><span>09:00</span><span>10:00</span><span>11:00</span><span>12:00</span><span>13:00</span><span>14:00</span><span>15:00</span><span>16:00</span><span>17:00</span><span>18:00</span><span>19:00</span><span>20:00</span><span>21:00</span></div>
+<div class="day"><div class="day-head"><span class="wd">Tuesday</span><span class="dt">2026-03-03</span></div>
+<div class="lane"><span class="room">R1</span><div class="track">
+<div class="chip" style="grid-column:1/span 2" title="L001 · 09:00–10:00"><b>Le Minh Chau</b><i>Ngoc Anh</i></div>
+<div class="chip" style="grid-column:4/span 3" title="L003 · 10:30–12:00"><b>Nguyen Thi Ha</b><i>Ngoc Anh</i></div>
+<div class="chip" style="grid-column:14/span 3" title="L006 · 15:30–17:00"><b>Bui An Nhien</b><i>Ngoc Anh</i></div>
+</div></div>
+<div class="lane"><span class="room">R2</span><div class="track">
+<div class="chip" style="grid-column:1/span 2" title="L002 · 09:00–10:00"><b>Tran Bao Long</b><i>Pham Duc</i></div>
+<div class="chip cancelled" style="grid-column:11/span 2" title="L005 · 14:00–15:00"><b>Vu Ha My</b><i>Pham Duc · cancelled</i></div>
+</div></div>
+<div class="lane"><span class="room">R3</span><div class="track">
+<div class="chip" style="grid-column:4/span 2" title="L004 · 10:30–11:30"><b>Do Van Kien</b><i>Le Thu</i></div>
+</div></div>
+</div>
+<div class="day"><div class="day-head"><span class="wd">Wednesday</span><span class="dt">2026-03-04</span></div>
+<div class="lane"><span class="room">R1</span><div class="track">
+<div class="chip pair" style="grid-column:5/span 3" title="11:00–12:30 · exam pair, half price"><b>Tran Bao Long + Nguyen Thi Ha</b><i>Ngoc Anh · exam pair</i></div>
+</div></div>
+<div class="lane"><span class="room">R2</span><div class="track">
+<div class="chip conflict" style="grid-column:1/span 2" title="L008 · 09:00–10:00"><b>Le Minh Chau</b><i>Pham Duc · student in two rooms</i></div>
+<div class="chip" style="grid-column:15/span 2" title="L012 · 16:00–17:00"><b>Vu Ha My</b><i>Pham Duc</i></div>
+</div></div>
+<div class="lane"><span class="room">R3</span><div class="track">
+<div class="chip conflict" style="grid-column:1/span 2" title="L007 · 09:00–10:00"><b>Le Minh Chau</b><i>Le Thu · student in two rooms</i></div>
+<div class="chip" style="grid-column:11/span 2" title="L011 · 14:00–15:00"><b>Do Van Kien</b><i>Le Thu</i></div>
+</div></div>
+</div>
+<div class="day"><div class="day-head"><span class="wd">Thursday</span><span class="dt">2026-03-05</span></div>
+<div class="lane"><span class="room">R1</span><div class="track">
+<div class="chip" style="grid-column:1/span 2" title="L013 · 09:00–10:00"><b>Bui An Nhien</b><i>Ngoc Anh</i></div>
+<div class="chip" style="grid-column:12/span 3" title="L016 · 14:30–16:00"><b>Nguyen Thi Ha</b><i>Ngoc Anh</i></div>
+</div></div>
+<div class="lane"><span class="room">R2</span><div class="track">
+<div class="chip noshow" style="grid-column:9/span 2" title="L015 · 13:00–14:00"><b>Tran Bao Long</b><i>Pham Duc · no show</i></div>
+</div></div>
+<div class="lane"><span class="room">R3</span><div class="track">
+<div class="chip" style="grid-column:4/span 3" title="L014 · 10:30–12:00"><b>Le Minh Chau</b><i>Le Thu</i></div>
+<div class="chip cancelled" style="grid-column:15/span 2" title="L017 · 16:00–17:00"><b>Do Van Kien</b><i>Le Thu · cancelled</i></div>
+</div></div>
+</div>
+<div class="day"><div class="day-head"><span class="wd">Friday</span><span class="dt">2026-03-06</span></div>
+<div class="lane"><span class="room">R1</span><div class="track">
+<div class="chip" style="grid-column:1/span 2" title="L018 · 09:00–10:00"><b>Vu Ha My</b><i>Ngoc Anh</i></div>
+<div class="chip" style="grid-column:6/span 2" title="L021 · 11:30–12:30"><b>Tran Bao Long</b><i>Ngoc Anh</i></div>
+<div class="chip" style="grid-column:9/span 2" title="L022 · 13:00–14:00"><b>Tran Bao Long</b><i>Ngoc Anh</i></div>
+<div class="chip" style="grid-column:15/span 2" title="L024 · 16:00–17:00"><b>Do Van Kien</b><i>Ngoc Anh</i></div>
+<div class="chip" style="grid-column:18/span 2" title="L025 · 17:30–18:30"><b>Vu Ha My</b><i>Ngoc Anh</i></div>
+<div class="chip" style="grid-column:21/span 2" title="L026 · 19:00–20:00"><b>Le Minh Chau</b><i>Ngoc Anh</i></div>
+<div class="chip conflict" style="grid-column:24/span 2" title="L027 · 20:30–21:30"><b>Bui An Nhien</b><i>Ngoc Anh · 7th booking of the day</i></div>
+</div></div>
+<div class="lane"><span class="room">R2</span><div class="track">
+<div class="chip" style="grid-column:1/span 2" title="L019 · 09:00–10:00"><b>Le Minh Chau</b><i>Pham Duc</i></div>
+<div class="chip" style="grid-column:12/span 2" title="L023 · 14:30–15:30"><b>Nguyen Thi Ha</b><i>Pham Duc</i></div>
+</div></div>
+<div class="lane"><span class="room">R3</span><div class="track">
+<div class="chip" style="grid-column:4/span 3" title="L020 · 10:30–12:00"><b>Bui An Nhien</b><i>Le Thu</i></div>
+</div></div>
+</div>
+<div class="day"><div class="day-head"><span class="wd">Saturday</span><span class="dt">2026-03-07</span></div>
+<div class="lane"><span class="room">R1</span><div class="track">
+<div class="chip" style="grid-column:13/span 2" title="L030 · 15:00–16:00"><b>Bui An Nhien</b><i>Ngoc Anh</i></div>
+</div></div>
+<div class="lane"><span class="room">R2</span><div class="track">
+<div class="chip" style="grid-column:5/span 2" title="L029 · 11:00–12:00"><b>Nguyen Thi Ha</b><i>Pham Duc</i></div>
+</div></div>
+<div class="lane"><span class="room">R3</span><div class="track">
+<div class="chip" style="grid-column:1/span 3" title="L028 · 09:00–10:30"><b>Tran Bao Long</b><i>Le Thu</i></div>
+</div></div>
+</div>
+<div class="day"><div class="day-head"><span class="wd">Sunday</span><span class="dt">2026-03-08</span></div>
+<div class="lane"><span class="room">R1</span><div class="track">
+<div class="chip" style="grid-column:3/span 2" title="L031 · 10:00–11:00"><b>Do Van Kien</b><i>Ngoc Anh</i></div>
+</div></div>
+<div class="lane"><span class="room">R2</span><div class="track">
+</div></div>
+<div class="lane"><span class="room">R3</span><div class="track">
+</div></div>
+</div>
+<div class="day closed"><div class="day-head"><span class="wd">Monday</span><span class="dt">2026-03-09</span><span class="closed-tag">centre closed</span></div>
+<div class="lane"><span class="room">R1</span><div class="track">
+</div></div>
+<div class="lane"><span class="room">R2</span><div class="track">
+</div></div>
+<div class="lane"><span class="room">R3</span><div class="track">
+<div class="chip conflict" style="grid-column:3/span 2" title="L032 · 10:00–11:00"><b>Vu Ha My</b><i>Le Thu · on the closed day</i></div>
+</div></div>
+</div>
+<div class="day"><div class="day-head"><span class="wd">Tuesday</span><span class="dt">2026-03-10</span></div>
+<div class="lane"><span class="room">R1</span><div class="track">
+<div class="chip conflict" style="grid-column:1/span 2" title="L033 · 09:00–10:00"><b>Le Minh Chau</b><i>Ngoc Anh · tutor in two rooms</i></div>
+</div></div>
+<div class="lane"><span class="room">R2</span><div class="track">
+<div class="chip conflict" style="grid-column:1/span 2" title="L034 · 09:00–10:00"><b>Tran Bao Long</b><i>Ngoc Anh · tutor in two rooms</i></div>
+</div></div>
+<div class="lane"><span class="room">R3</span><div class="track">
+</div></div>
+</div>
+</div></div>
+</div>
+
+<div class="wrap">
+<div class="tbl">
+<table>
+  <tr><th>Where</th><th>What happened</th><th>Rule broken</th></tr>
+  <tr><td class="k">Wed 09:00</td><td>Le Minh Chau is booked with two tutors in two rooms at the same time. Added by phone the same morning.</td><td>A student can only be in one place.</td></tr>
+  <tr><td class="k">Fri, all day</td><td>Ngoc Anh has seven lessons, the last one ending at 21:30.</td><td>No tutor takes more than six in a day.</td></tr>
+  <tr><td class="k">Mon 10:00</td><td>A lesson was moved onto Monday at a family's request.</td><td>The centre is closed on Monday.</td></tr>
+  <tr><td class="k">Tue 09:00</td><td>Ngoc Anh is teaching in R1 and R2 at the same time.</td><td>A tutor can only be in one room.</td></tr>
+  <tr><td class="k">Thu 16:00</td><td>A lesson cancelled 1h20 before start because the tutor was sick.</td><td>The 4-hour rule would charge the family. That cannot be the intent.</td></tr>
+</table>
+</div>
+<div class="callout bad">Four rule breaks in one week, three of them the exact kind the owner said must never happen again. None of them were caught, because a spreadsheet cannot say no.</div>
+
+<h2>Questions we would ask the owner first</h2>
+<p>The brief contradicts itself in a few places. Each answer below changes what gets built, so we have said what we assumed.</p>
+<div class="tbl">
+<table>
+  <tr><th>Question</th><th>What we assumed for now</th></tr>
+  <tr><td>Is the exam pair a real product, or a rule Mai bends?</td><td>A real product. The tool knows what a pair is and allows exactly that, nothing looser.</td></tr>
+  <tr><td>When a <strong>tutor</strong> cancels inside four hours, is the family charged?</td><td>No. The rule is about who cancelled, so the tool records that.</td></tr>
+  <tr><td>Does a Monday lesson ever happen with your blessing?</td><td>Never. The tool refuses it outright.</td></tr>
+  <tr><td>Does the six-a-day limit count late cancellations, where the tutor is still paid?</td><td>No. Only lessons that actually happen count.</td></tr>
+  <tr><td>Should the tool send the WhatsApp messages?</td><td>Not yet. Mai keeps sending them; the tool's job is to make sure what she sends is right.</td></tr>
+  <tr><td>The brief says 12 tutors and 6 rooms, the export shows 3 of each. Which is true?</td><td>Both. The export is a slice. Rooms and tutors are lists you can add to, not fixed.</td></tr>
+</table>
+</div>
+
+<h2>What the tool needs, and what we build first</h2>
+<p>Six things this tool will eventually need. In two and a half hours only one can be built properly, so we pick the one the owner called a dealbreaker and say plainly what waits.</p>
+<div class="tbl">
+<table>
+  <tr><th></th><th>Feature</th><th>In plain words</th></tr>
+  <tr><td><span class="tag now">first</span></td><td><strong>Conflict-safe booking</strong></td><td>The tool refuses any booking that puts a student, tutor or room in two places, gives a tutor a seventh lesson, or lands on a Monday. It tells you why. Exam pairs are allowed by name.</td></tr>
+  <tr><td><span class="tag now">first</span></td><td><strong>See today</strong></td><td>Open the laptop and see the day as a grid like the one above. Click an empty cell to book. This is the screen the booking rule lives on, not a separate feature.</td></tr>
+  <tr><td><span class="tag later">later</span></td><td>Cancellations</td><td>Mark a lesson cancelled, record who cancelled and whether it is charged under the four-hour rule.</td></tr>
+  <tr><td><span class="tag later">later</span></td><td>What changed after 16:00</td><td>A list of every move or cancellation since the tutors were told, so Mai knows exactly what to send.</td></tr>
+  <tr><td><span class="tag later">later</span></td><td>Tutor's daily message</td><td>The text Mai pastes into WhatsApp, generated from the final schedule.</td></tr>
+  <tr><td><span class="tag later">later</span></td><td>Family waitlist</td><td>When a slot frees up, show which family asked for that time.</td></tr>
+</table>
+</div>
+<div class="callout"><strong>Why this one.</strong> It is the only thing the owner said must never happen again, it happened three different ways last week, and it is the foundation the other five sit on. Cancellations and the 16:00 list are things you do to a booking. First there has to be a booking that cannot be wrong.</div>
+<p><strong>What stays broken for now.</strong> Cancelling still means changing a status by hand, and nobody is told automatically. Tutors still get their day from Mai on WhatsApp. The tool remembers every change it makes so the "what changed" list can be built next, but there is no screen for it yet.</p>
+
+<h2>How it fits together</h2>
+<p>Three pieces. A screen in the browser, a small service behind it, and a database that holds the bookings and refuses the bad ones. Nothing is installed on anyone's phone. The export is loaded once and the spreadsheet is retired.</p>
+<figure class="fig">
+<pre class="mermaid">
+C4Context
+  title Who uses it and what it talks to
+  Person(mai, "Mai, receptionist", "Books lessons, tells tutors their day")
+  Person(owner, "Owner", "Opens the laptop and sees today")
+  Person(tutor, "Tutor", "Still gets the day by WhatsApp")
+  System(tool, "Booking tool", "Shows the day as a grid and refuses conflicting bookings")
+  System_Ext(whatsapp, "WhatsApp", "Mai still sends by hand")
+  System_Ext(sheet, "Old spreadsheet", "Loaded once, then retired")
+  Rel(mai, tool, "Views a day, books a lesson")
+  Rel(owner, tool, "Views today")
+  Rel(sheet, tool, "One-off import")
+  Rel(mai, whatsapp, "Pastes each tutor's day")
+  Rel(whatsapp, tutor, "Daily schedule")
+</pre>
+<figcaption>Context: the tool sits between Mai and the bookings. WhatsApp stays as it is for now.</figcaption>
+</figure>
+
+<h3>What happens when Mai books a lesson</h3>
+<div class="flow">
+  <div class="step"><span class="n">1</span>Mai clicks an empty cell on today's grid: a room and a time.</div>
+  <div class="step"><span class="n">2</span>She types the student, picks the tutor and the length. Ticks "exam pair" if it is one.</div>
+  <div class="step"><span class="n">3</span>The tool checks the tutor's count for the day and asks the database to save.</div>
+  <div class="step"><span class="n">4</span>The database refuses if the room, tutor or student is already taken, or it is Monday.</div>
+  <div class="step"><span class="n">5</span>Either the lesson appears in the cell, or the cell shows the reason it was refused.</div>
+</div>
+
+<h3>Where each rule is enforced</h3>
+<p>Some rules are simple enough that the database itself refuses to store a bad row. That is the strongest kind of protection: it holds even if someone bypasses the screen. Rules that need judgement live in the service, where the reasoning can be read.</p>
+<div class="tbl">
+<table>
+  <tr><th>Rule</th><th>Enforced by</th><th>Why there</th></tr>
+  <tr><td>A room holds one lesson at a time</td><td><span class="tag db">database</span></td><td>Cannot be bypassed, works under two people booking at once.</td></tr>
+  <tr><td>A tutor is in one room at a time</td><td><span class="tag db">database</span></td><td>Same.</td></tr>
+  <tr><td>A student is in one place at a time</td><td><span class="tag db">database</span></td><td>The owner's dealbreaker. Must survive any client.</td></tr>
+  <tr><td>Closed on Monday; lessons are 60 or 90 minutes</td><td><span class="tag db">database</span></td><td>One line each, no judgement needed.</td></tr>
+  <tr><td>No tutor takes more than six in a day</td><td><span class="tag code">service</span></td><td>Needs to count, and to know that a pair counts once. That is a business reading, so it lives where people can read it.</td></tr>
+  <tr><td>An exam pair is two students, same tutor, room and time</td><td><span class="tag code">service</span></td><td>Same.</td></tr>
+</table>
+</div>
+
+<h3>What the import will say</h3>
+<p>The export is loaded through the same rules as a live booking. Where two rows conflict, the first one in the file wins and the second is refused with a reason. We expect exactly these four refusals, matching the red cells above:</p>
+<ul>
+  <li><span class="mono">L008</span> Le Minh Chau, Wed 09:00: student already booked in R3.</li>
+  <li><span class="mono">L027</span> Bui An Nhien, Fri 20:30: Ngoc Anh already has six lessons that day.</li>
+  <li><span class="mono">L032</span> Vu Ha My, Mon 10:00: the centre is closed on Monday.</li>
+  <li><span class="mono">L034</span> Tran Bao Long, Tue 09:00: Ngoc Anh already teaching in R1.</li>
+</ul>
+<p>The two cancelled lessons load as cancelled and take up no room or tutor time. The Wednesday exam pair loads as one pair.</p>
+
+<details>
+<summary>For the technical reader</summary>
+<p><strong>Stack.</strong> Java 17 with Spring Boot 3 and Spring JDBC, Flyway migrations, Postgres 16 in Docker with the btree_gist extension, React 18 with Vite for the single screen.</p>
+<p><strong>Data model.</strong> Tables for tutors, rooms, lessons and an append-only lesson_events log. A lesson has a generated time-range column; the three overlap rules are EXCLUDE constraints on that range keyed by room, tutor and student, ignoring cancelled rows and rows that share a pair id. Closed Monday is a CHECK on the day of week. A booking changed after the tutor was told is an event row whose timestamp is later than 16:00 the day before the lesson.</p>
+<p><strong>API.</strong> GET a day for the grid, POST a lesson which returns 409 with a list of reasons when refused, GET tutors for the form. Cancel, move and "what changed" endpoints are designed but not built.</p>
+<p><strong>Rejected endpoint.</strong> DELETE a lesson. A booking the tutor was told about cannot disappear. Cancellation is a state and an event, never a removal.</p>
+<figure class="fig">
+<pre class="mermaid">
+C4Container
+  title Containers
+  Person(mai, "Mai / Owner", "browser")
+  Container_Boundary(tool, "Booking tool") {
+    Container(web, "Day grid", "React 18, Vite", "One page. Click an empty cell to book. Refusals show in place.")
+    Container(api, "Booking API", "Java 17, Spring Boot 3", "Six-a-day cap and pair shape. Maps constraint names to reasons.")
+    ContainerDb(db, "Postgres 16", "Docker, btree_gist", "EXCLUDE on room, tutor, student vs time range. CHECK closed Monday. Append-only events.")
+  }
+  System_Ext(csv, "CSV export", "Loaded once through the same rules")
+  Rel(mai, web, "Uses")
+  Rel(web, api, "JSON")
+  Rel(api, db, "SQL")
+  Rel(csv, api, "Import on first start")
+</pre>
+</figure>
+<figure class="fig">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Mai
+  participant Web as Day grid
+  participant API as Booking API
+  participant DB as Postgres
+  Mai->>Web: click empty cell, fill form, submit
+  Web->>API: POST /api/lessons
+  API->>DB: count tutor's bookings that day (pair counts once)
+  DB-->>API: n
+  alt n >= 6
+    API-->>Web: 409, tutor already has six
+  else
+    API->>DB: insert lesson and created event, one transaction
+    alt constraint violated
+      DB-->>API: exclusion or check, constraint name
+      API-->>Web: 409, reason mapped from constraint name
+    else
+      DB-->>API: ok
+      API-->>Web: 201
+    end
+  end
+  Web->>API: GET /api/days/2026-03-06
+  API-->>Web: rooms and lessons
+  Web-->>Mai: grid redrawn, refusal shown in the cell
+</pre>
+</figure>
+</details>
+
+<h2>What you will be able to do at the demo</h2>
+<ul>
+  <li>Open the tool and see Friday 6 March as a grid. No scrolling.</li>
+  <li>Try to book Le Minh Chau into a second room at 09:00 and watch it refuse, with the reason in the cell.</li>
+  <li>Book an exam pair and watch it accept.</li>
+  <li>Try to give Ngoc Anh a seventh lesson and watch it refuse.</li>
+  <li>Read the import log: four rows refused, each with its reason.</li>
+</ul>
+<p style="color:var(--ink-3);font-size:.9rem;margin-top:3rem">Bright Path is a composite of real clients and the data is synthetic. Names in the timetable are from the anonymised export.</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.4.1/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true,theme:matchMedia("(prefers-color-scheme: dark)").matches?"dark":"default"});</script>
+</body>
+</html>
