@@ -102,3 +102,11 @@ header input[type="date"] { font: inherit; padding: 5px 8px; border: 1px solid v
 .reasons { grid-column: 1 / -1; margin: 0; padding: 10px 12px 10px 28px; background: var(--bad-soft); color: var(--bad); border-radius: 4px; }
 .reasons:empty { display: none; }
 .reasons li { margin: 2px 0; }
+
+.import { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 12px; padding: 10px 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; font-size: 12px; color: var(--ink-2); }
+.import label { display: inline-flex; align-items: center; gap: 6px; }
+.import input[type="file"] { font: inherit; max-width: 220px; }
+.import button { font: inherit; padding: 5px 12px; border-radius: 4px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
+.import button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.report { display: grid; gap: 2px; flex-basis: 100%; color: var(--ink); }
+.report em { font-style: normal; color: var(--bad); }

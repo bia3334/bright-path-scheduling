@@ -22,6 +22,7 @@ export default function App() {
   const [tutors, setTutors] = useState([])
   const [draft, setDraft] = useState(null)
   const [reasons, setReasons] = useState([])
+  const [report, setReport] = useState(null)
 
   const loadDay = () => fetch(`/api/days/${date}`).then((r) => r.json()).then(setDay)
 
@@ -75,6 +76,17 @@ export default function App() {
     })
   }
 
+  const importCsv = async (e) => {
+    e.preventDefault()
+    const form = new FormData(e.target)
+    if (!form.get('lessons')?.name) return
+    const res = await fetch('/api/import', { method: 'POST', body: form })
+    setReport(res.ok ? await res.json() : { loaded: 0, refused: { file: ['import failed'] } })
+    e.target.reset()
+    loadDay()
+    fetch('/api/tutors').then((r) => r.json()).then(setTutors)
+  }
+
   const rooms = day?.rooms ?? []
 
   return (
@@ -85,6 +97,20 @@ export default function App() {
         <span className="weekday">{weekday(date)}</span>
         <span className="hint">Click an empty cell to book</span>
       </header>
+
+      <form className="import" onSubmit={importCsv}>
+        <label>lessons_export.csv <input type="file" name="lessons" accept=".csv" required /></label>
+        <label>tutors.csv <input type="file" name="tutors" accept=".csv" /></label>
+        <button type="submit">Import</button>
+        {report && (
+          <span className="report">
+            {report.loaded} loaded, {Object.keys(report.refused).length} refused
+            {Object.entries(report.refused).map(([id, why]) => (
+              <em key={id}>{id}: {why.join('; ')}</em>
+            ))}
+          </span>
+        )}
+      </form>
 
       <div className="legend">
         <span><i className="sw" /> booked</span>

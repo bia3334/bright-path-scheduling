@@ -68,7 +68,18 @@ Seed rows are created at `app.seed-created-at`, 2026-03-02 12:00, as history.
 GET  /api/days/{date}   the day for the grid: every room, in order, even when empty
 POST /api/lessons       create a booking; 201 with the lesson, or 409 {"reasons":[...]}
 GET  /api/tutors        id, name and subject, for the booking form
+POST /api/import        multipart "lessons" (+ optional "tutors") in the export format;
+                        adds what the rules allow, reports what was refused, never deletes
 ```
+
+Import on demand, from the Import bar on the page or by hand:
+
+```
+curl -F lessons=@lessons_export.csv -F tutors=@tutors.csv localhost:8080/api/import
+```
+
+Rows already in the system come back refused as "already in the system", so
+re-importing the same export changes nothing.
 
 400 `{"reasons":[...]}` when the body is missing a field. Every refusal, in code
 or from a database constraint, comes back the same shape: a list of sentences a

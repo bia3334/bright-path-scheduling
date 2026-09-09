@@ -2,6 +2,8 @@ package com.brightpath.booking;
 
 import com.brightpath.booking.dto.NewLessonRequest;
 import com.brightpath.booking.exception.RefusedException;
+import com.brightpath.booking.seed.CsvImporter;
+import com.brightpath.booking.seed.ImportReport;
 import com.brightpath.booking.seed.SeedImporter;
 import com.brightpath.booking.service.LessonService;
 import org.junit.jupiter.api.Test;
@@ -14,6 +16,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -36,6 +40,7 @@ class BookingRulesTest {
 
     @Autowired LessonService service;
     @Autowired SeedImporter seed;
+    @Autowired CsvImporter importer;
     @Autowired JdbcClient jdbc;
 
     /** Free slots used below: 2026-03-07 afternoon in R4/R5, which the export never touches. */
@@ -79,5 +84,15 @@ class BookingRulesTest {
         assertThatThrownBy(() -> service.create(at("2026-03-09", "10:00", "Monday Hopeful", "T2", "R6", null)))
             .isInstanceOf(RefusedException.class)
             .hasMessageContaining("Monday");
+    }
+
+    @Test
+    void importingTheSameExportAgainAddsNothing() throws Exception {
+        ImportReport again = importer.importCsv(
+            Files.readAllLines(Path.of("../tutors.csv")),
+            Files.readAllLines(Path.of("../lessons_export.csv")));
+        assertThat(again.loaded()).isZero();
+        assertThat(again.refused()).hasSize(34);
+        assertThat(again.refused().get("L001")).containsExactly("lesson L001 is already in the system");
     }
 }

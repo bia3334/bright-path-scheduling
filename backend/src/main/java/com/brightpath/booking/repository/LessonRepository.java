@@ -118,9 +118,14 @@ public class LessonRepository {
         return jdbc.sql("SELECT id, name, subject FROM tutors ORDER BY id").query(Tutor.class).list();
     }
 
-    public void insertTutor(String id, String name, String subject, String phone) {
-        jdbc.sql("INSERT INTO tutors (id, name, subject, phone) VALUES (?, ?, ?, ?)")
+    /** A tutor already in the system is kept as is. */
+    public void insertTutorIfAbsent(String id, String name, String subject, String phone) {
+        jdbc.sql("INSERT INTO tutors (id, name, subject, phone) VALUES (?, ?, ?, ?) ON CONFLICT (id) DO NOTHING")
             .param(id).param(name).param(subject).param(phone).update();
+    }
+
+    public boolean exists(String id) {
+        return jdbc.sql("SELECT count(*) FROM lessons WHERE id = ?").param(id).query(Long.class).single() > 0;
     }
 
     public long lessonCount() {

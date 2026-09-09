@@ -104,6 +104,7 @@ The service does not pre-check the DB rules. It inserts and maps a violated cons
 GET  /api/days/{date}          the day: lessons grouped by room, for the grid       BUILT
 POST /api/lessons              create; 409 { reasons: [...] } when refused          BUILT
 GET  /api/tutors               for the booking form                                  BUILT
+POST /api/import               the export format, on demand; same rules, never deletes BUILT
 POST /api/lessons/{id}/cancel  cancel, records event, charge decision                NOT BUILT
 POST /api/lessons/{id}/move    move, records event with after_cutoff                 NOT BUILT
 GET  /api/changes?since=       what to tell tutors                                   NOT BUILT
